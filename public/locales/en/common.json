@@ -1,0 +1,7 @@
+{
+  "siteName": "Hotel Al Raha",
+  "nav": {"home": "Home", "rooms": "Rooms", "contact": "Contact"},
+  "home": {"title": "Welcome to Hotel Al Raha", "cta": "Book Now"}
+,
+  "login": {"submit": "Sign In"}
+}
