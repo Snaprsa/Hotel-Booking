@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  VIEWER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  PAY_AT_PROPERTY
+  ONLINE
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum PricingMode {
+  PERCENT
+  ABSOLUTE
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String?
+  email       String   @unique
+  phone       String?
+  role        Role     @default(VIEWER)
+  passwordHash String
+  createdAt   DateTime @default(now())
+  bookings    Booking[]
+  auditLogs   AuditLog[]
+}
+
+model Customer {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String
+  loyaltyCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  bookings     Booking[]
+}
+
+model RoomType {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  titleAR         String
+  titleEN         String
+  descAR          String
+  descEN          String
+  capacityAdults  Int
+  capacityChildren Int
+  baseNightlySar  Int
+  baseMonthlySar  Int
+  amenities       String[]
+  images          String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  units           RoomUnit[]
+  bookings        Booking[]
+  pricingRules    PricingRule[]
+}
+
+model RoomUnit {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+  roomTypeId String
+  isActive   Boolean  @default(true)
+  notes      String?
+  bookings   Booking[]
+  maintenanceBlocks MaintenanceBlock[]
+}
+
+model Booking {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  customer     Customer @relation(fields: [customerId], references: [id])
+  customerId   String
+  roomType     RoomType @relation(fields: [roomTypeId], references: [id])
+  roomTypeId   String
+  roomUnit     RoomUnit? @relation(fields: [roomUnitId], references: [id])
+  roomUnitId   String?
+  checkIn      DateTime
+  checkOut     DateTime
+  adults       Int
+  children     Int
+  status       BookingStatus @default(PENDING)
+  totalSar     Int
+  paymentMethod PaymentMethod @default(PAY_AT_PROPERTY)
+  paymentStatus PaymentStatus @default(UNPAID)
+  promoCode    PromoCode? @relation(fields: [promoCodeId], references: [id])
+  promoCodeId  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PricingRule {
+  id         String   @id @default(cuid())
+  title      String
+  startDate  DateTime
+  endDate    DateTime
+  mode       PricingMode
+  value      Int
+  roomType   RoomType? @relation(fields: [roomTypeId], references: [id])
+  roomTypeId String?
+}
+
+model PromoCode {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  mode       PricingMode
+  value      Int
+  startDate  DateTime?
+  endDate    DateTime?
+  usageLimit Int?
+  usedCount  Int      @default(0)
+  minNights  Int?
+  isActive   Boolean  @default(true)
+  bookings   Booking[]
+}
+
+model MaintenanceBlock {
+  id         String   @id @default(cuid())
+  roomUnit   RoomUnit @relation(fields: [roomUnitId], references: [id])
+  roomUnitId String
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+  action   String
+  entity   String
+  entityId String
+  diff     Json
+  createdAt DateTime @default(now())
+}
+
+@@index([email], name: "User_email_idx")
+@@index([code], name: "Booking_code_idx")
