@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  whatsapp      String?
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("user") // user, admin
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[]
+  reviews       Review[]
+
+  @@map("users")
+}
+
+model Room {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  address       String
+  price         Float
+  maxGuests     Int
+  bedrooms      Int
+  bathrooms     Int
+  beds          Int
+  amenities     String   // JSON string
+  images        String   // JSON array of image URLs
+  featuredImage String
+  available     Boolean  @default(true)
+  category      String   // Deluxe, Suite, Standard, etc.
+  lat           Float?
+  lng           Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bookings      Booking[]
+  reviews       Review[]
+
+  @@map("rooms")
+}
+
+model Booking {
+  id              String   @id @default(uuid())
+  userId          String
+  roomId          String
+  checkIn         DateTime
+  checkOut        DateTime
+  guests          Int
+  guestAdults     Int
+  guestChildren   Int      @default(0)
+  guestInfants    Int      @default(0)
+  totalPrice      Float
+  status          String   @default("pending") // pending, confirmed, cancelled, completed
+  guestName       String
+  guestEmail      String
+  guestPhone      String
+  guestWhatsapp   String?
+  specialRequests String?
+  confirmationCode String  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+  room            Room     @relation(fields: [roomId], references: [id])
+
+  @@map("bookings")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  roomId    String
+  rating    Int      // 1-5
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id])
+
+  @@map("reviews")
+}
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("settings")
+}
