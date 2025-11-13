@@ -1,4 +1,3 @@
-import { Poppins } from "next/font/google";
 import SiteHeader from "./(client-components)/(Header)/SiteHeader";
 import ClientCommons from "./ClientCommons";
 import "./globals.css";
@@ -8,11 +7,10 @@ import "rc-slider/assets/index.css";
 import Footer from "@/components/Footer";
 import FooterNav from "@/components/FooterNav";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
-});
+// Font will be loaded via CSS instead for better build compatibility
+const poppins = {
+  className: "font-sans",
+};
 
 export default function RootLayout({
   children,
