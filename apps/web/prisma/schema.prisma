@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  name         String
+  description  String?
+  capacity     Int
+  active       Boolean       @default(true)
+  ratePlans    RatePlan[]
+  inventory    Inventory[]
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model RatePlan {
+  id                String        @id @default(cuid())
+  code              String        @unique
+  room              Room          @relation(fields: [roomId], references: [id])
+  roomId            String
+  name              String
+  currency          String        @default("SAR")
+  baseMinor         Int
+  taxPercent        Float         @default(0)
+  refundable        Boolean       @default(true)
+  cancelWindowHours Int           @default(24)
+  reservations      Reservation[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Inventory {
+  id        String   @id @default(cuid())
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String
+  date      DateTime
+  total     Int
+  reserved  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, date])
+  @@index([roomId, date])
+}
+
+model Reservation {
+  id                   String             @id @default(cuid())
+  code                 String             @unique
+  room                 Room               @relation(fields: [roomId], references: [id])
+  roomId               String
+  ratePlan             RatePlan           @relation(fields: [ratePlanId], references: [id])
+  ratePlanId           String
+  guestName            String
+  guestEmail           String?
+  guestPhone           String?
+  checkIn              DateTime
+  checkOut             DateTime
+  totalMinor           Int
+  currency             String             @default("SAR")
+  status               ReservationStatus  @default(CONFIRMED)
+  cancelToken          String?            @unique
+  cancelTokenExpiresAt DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  nights               ReservationNight[]
+}
+
+model ReservationNight {
+  id            String      @id @default(cuid())
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  reservationId String
+  roomId        String
+  date          DateTime
+
+  @@unique([roomId, date, reservationId])
+  @@index([roomId, date])
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  CANCELLED
+}
